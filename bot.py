@@ -159,53 +159,69 @@ class SecurityManager:
 # ==============================================================================
 # 🎛 [៥] រោងចក្រផលិតប៊ូតុង (REPLY KEYBOARD BUILDER 100%)
 # ==============================================================================
+def styled_btn(text, style=None):
+    """
+    បង្កើត KeyboardButton ដែលមានពណ៌ (style) ដោយសុវត្ថិភាព
+    style ជម្រើស: 'primary' (ខៀវ), 'success' (បៃតង), 'danger' (ក្រហម)
+    ត្រូវការ pyTelegramBotAPI កំណែថ្មី (គាំទ្រ Bot API 9.4+, ថ្ងៃទី 9 កុម្ភៈ 2026)
+    បើ library ចាស់ មិនស្គាល់ argument style, កូដនឹងវិលត្រឡប់ទៅប៊ូតុងធម្មតាដោយស្វ័យប្រវត្តិ
+    (គ្មាន Error គាំង) ព្រោះ App Telegram ចាស់ក៏មិនអាចបង្ហាញពណ៌បានដែរ។
+    """
+    if style:
+        try:
+            return types.KeyboardButton(text, style=style)
+        except TypeError:
+            logger.warning(f"⚠️ pyTelegramBotAPI កំណែបច្ចុប្បន្នមិនគាំទ្រ style='{style}' ទេ — ប្រើប៊ូតុងធម្មតាជំនួស។ សូម pip install --upgrade pyTelegramBotAPI")
+    return types.KeyboardButton(text)
+
+
 class KeyboardBuilder:
     """ ប្រព័ន្ធនេះធានាថា គ្មាន INLINE KEYBOARD ត្រូវបានប្រើប្រាស់ដាច់ខាត """
     
     @staticmethod
     def user_home():
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-        kb.add(types.KeyboardButton("🛒 Buy"))
+        kb.add(styled_btn("🛒 Buy", "success"))
         return kb
 
     @staticmethod
     def cancel_only():
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-        kb.add(types.KeyboardButton("❌ បោះបង់ (Cancel)"))
+        kb.add(styled_btn("❌ បោះបង់ (Cancel)", "danger"))
         return kb
         
     @staticmethod
     def back_only():
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-        kb.add(types.KeyboardButton("➡️Back"))
+        kb.add(styled_btn("➡️Back", "primary"))
         return kb
 
     @staticmethod
     def cancel_payment():
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=1)
-        kb.add(types.KeyboardButton("បោះបង់"))
+        kb.add(styled_btn("បោះបង់", "danger"))
         return kb
 
     @staticmethod
     def admin_dashboard(role):
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        # ម៉ឺនុយអេតមីនធម្មតា
-        kb.add("✏️អេត Button", "🗑លុប Button")
-        kb.add("📝ដាក់អក្សរ", "🗑លុបអក្សរ")
-        kb.add("រៀបចំបូតុង", "✏️អេតកព្ចាប់ Button")
-        kb.add("🗑លុប កព្ចាប់", "📦អេតស្តុកកព្ចាប់")
-        kb.add("🗑លុប ស្តុក", "💬ធ្ញើសារ")
-        kb.add("🖼ដាក់QRcode", "🗑លុប QRcode")
-        kb.add("✏️ដាក់ABA", "🗑លុបABA")
-        kb.add("🖼Wellcome Photo", "🗑លុប Welcome Photo")
-        kb.add("✏️អេតលីង/វីដេអូ", "🗑លុបលីង/វីដេអូ")
+        # ម៉ឺនុយអេតមីនធម្មតា (ខៀវ=កែ/បង្កើត, ក្រហម=លុប)
+        kb.add(styled_btn("✏️អេត Button", "primary"), styled_btn("🗑លុប Button", "danger"))
+        kb.add(styled_btn("📝ដាក់អក្សរ", "primary"), styled_btn("🗑លុបអក្សរ", "danger"))
+        kb.add(styled_btn("រៀបចំបូតុង", "primary"), styled_btn("✏️អេតកព្ចាប់ Button", "primary"))
+        kb.add(styled_btn("🗑លុប កព្ចាប់", "danger"), styled_btn("📦អេតស្តុកកព្ចាប់", "primary"))
+        kb.add(styled_btn("🗑លុប ស្តុក", "danger"), styled_btn("💬ធ្ញើសារ", "primary"))
+        kb.add(styled_btn("🖼ដាក់QRcode", "primary"), styled_btn("🗑លុប QRcode", "danger"))
+        kb.add(styled_btn("✏️ដាក់ABA", "primary"), styled_btn("🗑លុបABA", "danger"))
+        kb.add(styled_btn("🖼Wellcome Photo", "primary"), styled_btn("🗑លុប Welcome Photo", "danger"))
+        kb.add(styled_btn("✏️អេតលីង/វីដេអូ", "primary"), styled_btn("🗑លុបលីង/វីដេអូ", "danger"))
         
         # ម៉ឺនុយមេធំ (Super Admin តែប៉ុណ្ណោះទើបឃើញ)
         if role == 'super_admin':
-            kb.add("🤖Abb Bot", "🔐បង្កើតកូតអេតមីន")
-            kb.add("📊មើលចំនួនBot", "🗑លុប Bot")
+            kb.add(styled_btn("🤖Abb Bot", "primary"), styled_btn("🔐បង្កើតកូតអេតមីន", "primary"))
+            kb.add(styled_btn("📊មើលចំនួនBot", "primary"), styled_btn("🗑លុប Bot", "danger"))
             
-        kb.add("➡️Back")
+        kb.add(styled_btn("➡️Back", "primary"))
         return kb
 
     @staticmethod
@@ -229,47 +245,51 @@ class KeyboardBuilder:
             if pkgs:
                 for p in pkgs:
                     items.append(f"📦 {p['name']} | 💰 ${p['price']}")
-                    
+
+        # ពណ៌៖ កញ្ចប់ទំនិញ (📦) = បៃតង (សម្រាប់ទិញ) / Folder ធម្មតា = ខៀវ (សម្រាប់រុករក)
+        buttons = [styled_btn(name, "success" if name.startswith("📦") else "primary") for name in items]
+
         # រៀបប៊ូតុងជា ២ ជួរឲ្យស្អាត
-        for i in range(0, len(items), 2):
-            if i + 1 < len(items):
-                kb.add(items[i], items[i+1])
+        for i in range(0, len(buttons), 2):
+            if i + 1 < len(buttons):
+                kb.add(buttons[i], buttons[i+1])
             else:
-                kb.add(items[i])
+                kb.add(buttons[i])
                 
-        kb.add("➡️Back")
+        kb.add(styled_btn("➡️Back", "primary"))
         return kb
 
     @staticmethod
     def list_dynamic_options(items, include_cancel=True):
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        for i in range(0, len(items), 2):
-            if i + 1 < len(items):
-                kb.add(items[i], items[i+1])
+        buttons = [styled_btn(item, "primary") for item in items]
+        for i in range(0, len(buttons), 2):
+            if i + 1 < len(buttons):
+                kb.add(buttons[i], buttons[i+1])
             else:
-                kb.add(items[i])
+                kb.add(buttons[i])
         if include_cancel:
-            kb.add("❌ បោះបង់ (Cancel)")
+            kb.add(styled_btn("❌ បោះបង់ (Cancel)", "danger"))
         return kb
 
     @staticmethod
     def payment_methods_menu():
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        kb.add("🏦 ABA MOBILE", "🧡QR Code")
-        kb.add("បោះបង់")
+        kb.add(styled_btn("🏦 ABA MOBILE", "primary"), styled_btn("🧡QR Code", "primary"))
+        kb.add(styled_btn("បោះបង់", "danger"))
         return kb
 
     @staticmethod
     def rearrange_keypad():
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=4)
-        kb.add("⬅️ឆ្វេង", "⬆️លើ", "⬇️ក្រោម", "➡️ស្ដាំ")
-        kb.add("✅ រក្សាទុក", "❌ បោះបង់ (Cancel)")
+        kb.add(styled_btn("⬅️ឆ្វេង", "primary"), styled_btn("⬆️លើ", "primary"), styled_btn("⬇️ក្រោម", "primary"), styled_btn("➡️ស្ដាំ", "primary"))
+        kb.add(styled_btn("✅ រក្សាទុក", "success"), styled_btn("❌ បោះបង់ (Cancel)", "danger"))
         return kb
 
     @staticmethod
     def approval_keypad(trx_id):
         kb = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
-        kb.add(f"✅ យល់ព្រម TRX-{trx_id}", f"❌ បដិសេធ TRX-{trx_id}")
+        kb.add(styled_btn(f"✅ យល់ព្រម TRX-{trx_id}", "success"), styled_btn(f"❌ បដិសេធ TRX-{trx_id}", "danger"))
         return kb
 
 # ==============================================================================
