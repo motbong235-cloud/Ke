@@ -163,16 +163,49 @@ def styled_btn(text, style=None):
     """
     បង្កើត KeyboardButton ដែលមានពណ៌ (style) ដោយសុវត្ថិភាព
     style ជម្រើស: 'primary' (ខៀវ), 'success' (បៃតង), 'danger' (ក្រហម)
-    ត្រូវការ pyTelegramBotAPI កំណែថ្មី (គាំទ្រ Bot API 9.4+, ថ្ងៃទី 9 កុម្ភៈ 2026)
-    បើ library ចាស់ មិនស្គាល់ argument style, កូដនឹងវិលត្រឡប់ទៅប៊ូតុងធម្មតាដោយស្វ័យប្រវត្តិ
-    (គ្មាន Error គាំង) ព្រោះ App Telegram ចាស់ក៏មិនអាចបង្ហាញពណ៌បានដែរ។
+    ត្រូវការ Telegram App កំណែថ្មី (Bot API 9.4+, ថ្ងៃទី 9 កុម្ភៈ 2026) ទើបបង្ហាញពណ៌
+    ចំណាំសំខាន់: pyTelegramBotAPI មួយចំនួន (ជាពិសេសកំណែចាស់) ព្រំដែន to_dict()/to_dic()
+    របស់វា មិនទាន់ដាក់ field 'style' ចូល JSON ដែលផ្ញើទៅ Telegram ទេ សូម្បី constructor
+    នឹងទទួល argument style ដោយគ្មាន Error ក៏ដោយ (field គ្រាន់តែត្រូវបានចោល ស្ងាត់ៗ)។
+    ដូច្នេះ ខាងក្រោមនេះបាន monkey-patch serializer ដោយផ្ទាល់ ដើម្បីធានាថា style
+    ត្រូវបញ្ចូនទៅ Telegram ជានិច្ច មិនថា library version ណា។ (មើល _patch_keyboard_button_style())
     """
+    btn = types.KeyboardButton(text)
     if style:
-        try:
-            return types.KeyboardButton(text, style=style)
-        except TypeError:
-            logger.warning(f"⚠️ pyTelegramBotAPI កំណែបច្ចុប្បន្នមិនគាំទ្រ style='{style}' ទេ — ប្រើប៊ូតុងធម្មតាជំនួស។ សូម pip install --upgrade pyTelegramBotAPI")
-    return types.KeyboardButton(text)
+        btn.style = style
+    return btn
+
+
+def _patch_keyboard_button_style():
+    """
+    Monkey-patch telebot.types.KeyboardButton ដើម្បីបង្ខំបញ្ចូល field 'style'
+    ទៅក្នុង JSON dict ដែលបានផ្ញើទៅ Telegram Bot API សូម្បី library កំណែដែលកំពុងដំណើរការ
+    មិនទាន់គាំទ្រ Bot API 9.4 (Colored Buttons) ជាផ្លូវការក៏ដោយ។
+    """
+    method_name = None
+    if hasattr(types.KeyboardButton, 'to_dict'):
+        method_name = 'to_dict'
+    elif hasattr(types.KeyboardButton, 'to_dic'):
+        method_name = 'to_dic'
+
+    if not method_name:
+        logger.warning("⚠️ រកមិនឃើញ to_dict()/to_dic() លើ telebot.types.KeyboardButton — សូមពិនិត្យ library version")
+        return
+
+    original_method = getattr(types.KeyboardButton, method_name)
+
+    def patched_method(self):
+        result = original_method(self)
+        style = getattr(self, 'style', None)
+        if style and isinstance(result, dict):
+            result['style'] = style
+        return result
+
+    setattr(types.KeyboardButton, method_name, patched_method)
+    logger.info(f"🟢 Patched telebot.types.KeyboardButton.{method_name}() ដើម្បីគាំទ្រ style (Bot API 9.4+)")
+
+
+_patch_keyboard_button_style()
 
 
 class KeyboardBuilder:
